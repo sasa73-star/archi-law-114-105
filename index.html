@@ -199,6 +199,18 @@ main{
 .user-row__name{flex:1;font-weight:700;font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .user-row__go{color:var(--text-faint);font-size:16px;}
 .empty-hint{font-size:13px;color:var(--text-faint);text-align:center;padding:18px;background:var(--surface-2);border-radius:13px;border:1px dashed var(--border-strong);}
+.set-mixed{
+  width:100%;display:flex;align-items:center;gap:12px;text-align:left;
+  background:linear-gradient(150deg,var(--accent),var(--accent-press));
+  color:#fff;border:none;border-radius:15px;padding:14px 15px;margin-bottom:9px;
+  box-shadow:0 6px 18px color-mix(in srgb,var(--accent) 34%,transparent);
+  transition:transform .12s;
+}
+.set-mixed:active{transform:scale(.98);}
+.set-mixed__avatar{width:40px;height:40px;flex:none;border-radius:12px;background:rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center;font-size:21px;}
+.set-mixed__name{font-weight:900;font-size:15.5px;}
+.set-mixed__sub{font-size:11.5px;font-weight:600;opacity:.85;margin-top:1px;display:block;}
+.set-mixed__go{font-size:18px;opacity:.9;flex:none;}
 .newuser{display:flex;gap:9px;}
 .newuser input{
   flex:1;min-width:0;border:1px solid var(--border-strong);background:var(--surface);
@@ -228,6 +240,7 @@ main{
 .flag{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:700;padding:4px 9px;border-radius:8px;}
 .flag--warn{background:var(--warn-bg);color:var(--warn);border:1px solid var(--warn-border);}
 .flag--rose{background:var(--bad-bg);color:var(--bad);}
+.flag--easy{background:var(--accent);color:#fff;}
 .qtext{
   font-size:17px;font-weight:500;line-height:1.62;margin:0 0 16px;
   letter-spacing:.005em;overflow-wrap:anywhere;word-break:break-word;
@@ -337,6 +350,8 @@ main{
 
 .witem{background:var(--surface);border:1px solid var(--border);border-radius:13px;padding:12px 13px;box-shadow:var(--shadow-sm);}
 .witem__top{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:7px;}
+.witem__badges{display:flex;align-items:center;gap:6px;min-width:0;flex-wrap:wrap;}
+.witem__easy{display:inline-flex;align-items:center;gap:3px;font-size:10.5px;font-weight:900;padding:3px 8px;border-radius:7px;background:var(--accent);color:#fff;letter-spacing:.02em;white-space:nowrap;}
 .witem__top .qid{color:var(--bad);background:var(--bad-bg);padding:3px 8px;border-radius:7px;}
 .witem__rm{font-size:11.5px;font-weight:700;color:var(--text-faint);padding:4px 8px;border-radius:8px;transition:background .15s,color .15s;}
 .witem__rm:active{background:var(--bad-bg);color:var(--bad);}
@@ -368,7 +383,7 @@ main{
       <div class="brand__logo">法</div>
       <div>
         <div class="brand__title">營建法規刷題</div>
-        <div class="brand__sub">113 – 114 年題庫</div>
+        <div id="brandSub" class="brand__sub">請選擇題庫</div>
       </div>
     </div>
     <div class="appbar__right">
@@ -376,6 +391,9 @@ main{
       <button id="themeToggle" class="iconbtn" aria-label="切換深淺色"></button>
       <button id="exportDataBtn" class="iconbtn hidden" aria-label="匯出備份檔" title="匯出我的進度與錯題本">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>
+      </button>
+      <button id="switchSetBtn" class="iconbtn hidden" aria-label="切換題庫" title="切換題庫年度">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5V4.5A2.5 2.5 0 0 1 6.5 2H20v15H6.5a2.5 2.5 0 0 0 0 5H20"/></svg>
       </button>
       <button id="switchUserBtn" class="user-chip hidden" aria-label="切換使用者">
         <span id="currentUserBadge" class="user-chip__name"></span>
@@ -404,17 +422,33 @@ main{
 </nav>
 
 <script>
-const DATA_URL = encodeURI('(114-113)_questions.json');
+const QUESTION_SETS = [
+  { key: '114', label: '114 年題庫', file: '114_questions.json' },
+  { key: '113', label: '113 年題庫', file: '113_questions.json' },
+  { key: '112', label: '112 年題庫', file: '112_questions.json' },
+  { key: '111', label: '111 年題庫', file: '111_questions.json' },
+  { key: '110', label: '110 年題庫', file: '110_questions.json' },
+  { key: '109', label: '109 年題庫', file: '109_questions.json' },
+  { key: '108', label: '108 年題庫', file: '108_questions.json' },
+  { key: '107', label: '107 年題庫', file: '107_questions.json' },
+  { key: '106', label: '106 年題庫', file: '106_questions.json' },
+  { key: '105', label: '105 年題庫', file: '105_questions.json' }
+];
 const LS_USERS_KEY = 'law_quiz_users_v1';
 const LS_WRONG_PREFIX = 'law_quiz_wrong_v1__';
 const LS_PROGRESS_PREFIX = 'law_quiz_progress_v1__';
 const LS_THEME_KEY = 'law_quiz_theme_v1';
+const LS_LASTSET_KEY = 'law_quiz_lastset_v1';
+const LS_MIXED_PREFIX = 'law_quiz_mixed_v1__';
+const MIXED_COUNT = 80;
 
 let ALL_QUESTIONS = [];
+let MIXED_POOL_BY_YEAR = {};
 let currentIndex = 0;
 let currentView = 'practice';
 let shuffledOrder = [];
 let currentUser = null;
+let currentSet = null;
 let isReviewPracticeMode = false;
 let reviewOrder = [];
 let reviewIndex = 0;
@@ -426,6 +460,8 @@ const progressBadge = document.getElementById('progressBadge');
 const bottomNav = document.getElementById('bottomNav');
 const currentUserBadge = document.getElementById('currentUserBadge');
 const switchUserBtn = document.getElementById('switchUserBtn');
+const switchSetBtn = document.getElementById('switchSetBtn');
+const brandSub = document.getElementById('brandSub');
 const themeToggle = document.getElementById('themeToggle');
 const exportDataBtn = document.getElementById('exportDataBtn');
 const importFileInput = document.getElementById('importFileInput');
@@ -456,6 +492,10 @@ function loadUserList() {
 function saveUserList(list) {
   localStorage.setItem(LS_USERS_KEY, JSON.stringify(list));
 }
+function storageKeySuffix() {
+  return currentUser + '__' + (currentSet ? currentSet.key : '');
+}
+/* 錯題複習本不分年度題庫，所有年度共用同一份紀錄，方便跨年度一起複習 */
 function loadWrongBook() {
   if (!currentUser) return {};
   try { return JSON.parse(localStorage.getItem(LS_WRONG_PREFIX + currentUser)) || {}; } catch(e) { return {}; }
@@ -466,11 +506,11 @@ function saveWrongBook(book) {
 }
 function loadProgress() {
   if (!currentUser) return { index: 0 };
-  try { return JSON.parse(localStorage.getItem(LS_PROGRESS_PREFIX + currentUser)) || { index: 0 }; } catch(e) { return { index: 0 }; }
+  try { return JSON.parse(localStorage.getItem(LS_PROGRESS_PREFIX + storageKeySuffix())) || { index: 0 }; } catch(e) { return { index: 0 }; }
 }
 function saveProgress() {
   if (!currentUser) return;
-  localStorage.setItem(LS_PROGRESS_PREFIX + currentUser, JSON.stringify({ index: currentIndex }));
+  localStorage.setItem(LS_PROGRESS_PREFIX + storageKeySuffix(), JSON.stringify({ index: currentIndex }));
 }
 
 /* ---------- Export / Import ---------- */
@@ -478,8 +518,9 @@ function exportUserData() {
   if (!currentUser) return;
   const payload = {
     type: 'law_quiz_backup',
-    version: 1,
+    version: 2,
     user: currentUser,
+    setKey: currentSet ? currentSet.key : '',
     exportedAt: new Date().toISOString(),
     progress: loadProgress(),
     wrongBook: loadWrongBook()
@@ -489,7 +530,7 @@ function exportUserData() {
   const a = document.createElement('a');
   const dateStr = new Date().toISOString().slice(0,10);
   a.href = url;
-  a.download = `law_quiz_backup_${currentUser}_${dateStr}.json`;
+  a.download = `law_quiz_backup_${currentUser}_${(currentSet?currentSet.key:'set')}_${dateStr}.json`;
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
@@ -509,6 +550,8 @@ function importUserDataFromFile(file) {
       return;
     }
     const targetUser = data.user;
+    const targetSetKey = data.setKey || (currentSet ? currentSet.key : '');
+    const progressSuffix = targetUser + '__' + targetSetKey;
     const users = loadUserList();
     if (!users.includes(targetUser)) {
       users.push(targetUser);
@@ -520,7 +563,7 @@ function importUserDataFromFile(file) {
       localStorage.setItem(LS_WRONG_PREFIX + targetUser, JSON.stringify(merged));
     }
     if (data.progress && typeof data.progress === 'object') {
-      localStorage.setItem(LS_PROGRESS_PREFIX + targetUser, JSON.stringify(data.progress));
+      localStorage.setItem(LS_PROGRESS_PREFIX + progressSuffix, JSON.stringify(data.progress));
     }
     alert(`已成功匯入使用者「${targetUser}」的備份資料！`);
     renderUserSelectScreen();
@@ -540,6 +583,7 @@ importFileInput.addEventListener('change', (e) => {
 function renderUserSelectScreen() {
   bottomNav.classList.add('hidden');
   switchUserBtn.classList.add('hidden');
+  switchSetBtn.classList.remove('hidden');
   exportDataBtn.classList.add('hidden');
   progressBadge.classList.add('hidden');
   progressBadge.textContent = '';
@@ -600,11 +644,15 @@ function renderUserSelectScreen() {
 }
 
 function handleDeleteUser(name) {
-  if (!confirm(`確定要刪除使用者「${name}」嗎？\n此操作會同時清除該使用者的作答進度與錯題複習本，且無法復原。`)) return;
+  if (!confirm(`確定要刪除使用者「${name}」嗎？\n此操作會同時清除該使用者在所有題庫的作答進度與錯題複習本，且無法復原。`)) return;
   const users = loadUserList().filter(u => u !== name);
   saveUserList(users);
   localStorage.removeItem(LS_WRONG_PREFIX + name);
-  localStorage.removeItem(LS_PROGRESS_PREFIX + name);
+  localStorage.removeItem(LS_MIXED_PREFIX + name);
+  localStorage.removeItem(LS_PROGRESS_PREFIX + name + '__mixed');
+  QUESTION_SETS.forEach(set => {
+    localStorage.removeItem(LS_PROGRESS_PREFIX + name + '__' + set.key);
+  });
   renderUserSelectScreen();
 }
 
@@ -624,10 +672,14 @@ function enterAsUser(name) {
   currentUser = name;
   currentUserBadge.textContent = name;
   switchUserBtn.classList.remove('hidden');
+  switchSetBtn.classList.remove('hidden');
   exportDataBtn.classList.remove('hidden');
   progressBadge.classList.remove('hidden');
   bottomNav.classList.remove('hidden');
 
+  if (currentSet && currentSet.mixed) {
+    ALL_QUESTIONS = buildMixedQuestions();
+  }
   shuffledOrder = ALL_QUESTIONS.map(q => q.id);
   const progress = loadProgress();
   currentIndex = Math.min(Math.max(progress.index || 0, 0), shuffledOrder.length - 1);
@@ -640,6 +692,164 @@ switchUserBtn.addEventListener('click', () => {
   exportDataBtn.classList.add('hidden');
   renderUserSelectScreen();
 });
+
+switchSetBtn.addEventListener('click', () => {
+  currentUser = null;
+  exportDataBtn.classList.add('hidden');
+  switchUserBtn.classList.add('hidden');
+  switchSetBtn.classList.add('hidden');
+  renderSetSelectScreen();
+});
+
+/* ---------- Question Set Selection ---------- */
+function renderSetSelectScreen() {
+  bottomNav.classList.add('hidden');
+  switchUserBtn.classList.add('hidden');
+  switchSetBtn.classList.add('hidden');
+  exportDataBtn.classList.add('hidden');
+  progressBadge.classList.add('hidden');
+  progressBadge.textContent = '';
+  brandSub.textContent = '請選擇題庫';
+
+  const setsHtml = QUESTION_SETS.map(set => `
+    <button class="user-row select-set-btn" style="width:100%;" data-key="${escapeHtml(set.key)}">
+      <span class="user-row__avatar">📘</span>
+      <span class="user-row__name">${escapeHtml(set.label)}</span>
+      <span class="user-row__go">→</span>
+    </button>`).join('');
+
+  mainArea.innerHTML = `
+    <div class="hero">
+      <div class="hero__logo">法</div>
+      <h2 class="hero__title">選擇要刷的題庫</h2>
+      <p class="hero__sub">每個題庫年度的作答進度與錯題本會分開記錄</p>
+    </div>
+    <section class="block">
+      <div class="block__label">綜合測驗</div>
+      <button id="selectMixedBtn" class="set-mixed">
+        <span class="set-mixed__avatar">🎲</span>
+        <span style="flex:1;min-width:0;">
+          <span class="set-mixed__name">綜合測驗 ${MIXED_COUNT} 題</span>
+          <span class="set-mixed__sub">各年度題目平均隨機抽取，綜合練習</span>
+        </span>
+        <span class="set-mixed__go">→</span>
+      </button>
+    </section>
+    <section class="block">
+      <div class="block__label">考古題年度</div>
+      ${setsHtml}
+    </section>
+  `;
+
+  const mixedBtn = document.getElementById('selectMixedBtn');
+  if (mixedBtn) mixedBtn.addEventListener('click', loadMixedSet);
+  document.querySelectorAll('.select-set-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const key = btn.getAttribute('data-key');
+      const set = QUESTION_SETS.find(s => s.key === key);
+      if (set) loadQuestionSet(set);
+    });
+  });
+}
+
+function loadQuestionSet(set) {
+  mainArea.innerHTML = `<div class="loadwrap"><div class="spinner"></div><p>正在載入題庫…</p></div>`;
+  fetch(encodeURI(set.file))
+    .then(res => {
+      if (!res.ok) throw new Error('題庫載入失敗：' + res.status);
+      return res.json();
+    })
+    .then(data => {
+      ALL_QUESTIONS = data;
+      currentSet = set;
+      shuffledOrder = [];
+      brandSub.textContent = set.label;
+      try { localStorage.setItem(LS_LASTSET_KEY, set.key); } catch(e){}
+      renderUserSelectScreen();
+    })
+    .catch(err => {
+      mainArea.innerHTML = `<div class="errbox">
+        <div class="errbox__emoji">⚠️</div>
+        <p style="font-weight:700;">${escapeHtml(err.message)}</p>
+        <p class="hint">請確認 ${escapeHtml(set.file)} 與 index.html 位於同一目錄，並以本機伺服器（非 file://）方式開啟。</p>
+        <button id="backToSetSelectBtn" class="btn btn--soft" style="margin-top:14px;">← 返回題庫選擇</button>
+      </div>`;
+      const backBtn = document.getElementById('backToSetSelectBtn');
+      if (backBtn) backBtn.addEventListener('click', renderSetSelectScreen);
+    });
+}
+
+/* ---------- Mixed Test (綜合測驗) ---------- */
+function loadMixedSet() {
+  mainArea.innerHTML = `<div class="loadwrap"><div class="spinner"></div><p>正在載入各年度題庫…</p></div>`;
+  brandSub.textContent = '綜合測驗';
+  Promise.all(QUESTION_SETS.map(set =>
+    fetch(encodeURI(set.file))
+      .then(res => res.ok ? res.json() : null)
+      .then(data => ({ set, data: Array.isArray(data) ? data : null }))
+      .catch(() => ({ set, data: null }))
+  )).then(results => {
+    MIXED_POOL_BY_YEAR = {};
+    results.forEach(r => { if (r.data) MIXED_POOL_BY_YEAR[r.set.key] = r.data; });
+    const total = Object.values(MIXED_POOL_BY_YEAR).reduce((n, a) => n + a.length, 0);
+    if (total === 0) {
+      mainArea.innerHTML = `<div class="errbox">
+        <div class="errbox__emoji">⚠️</div>
+        <p style="font-weight:700;">綜合測驗載入失敗</p>
+        <p class="hint">找不到任何年度題庫檔，請確認題庫 JSON 與 index.html 位於同一目錄，並以本機伺服器（非 file://）方式開啟。</p>
+        <button id="backToSetSelectBtn" class="btn btn--soft" style="margin-top:14px;">← 返回選單</button>
+      </div>`;
+      const b = document.getElementById('backToSetSelectBtn');
+      if (b) b.addEventListener('click', renderSetSelectScreen);
+      return;
+    }
+    currentSet = { key: 'mixed', label: '綜合測驗', mixed: true };
+    ALL_QUESTIONS = [];
+    shuffledOrder = [];
+    try { localStorage.setItem(LS_LASTSET_KEY, 'mixed'); } catch(e){}
+    renderUserSelectScreen();
+  });
+}
+
+function saveMixedIds(ids) {
+  if (!currentUser) return;
+  try { localStorage.setItem(LS_MIXED_PREFIX + currentUser, JSON.stringify(ids)); } catch(e){}
+}
+
+function sampleMixedQuestions(targetTotal) {
+  const years = Object.keys(MIXED_POOL_BY_YEAR).filter(k => MIXED_POOL_BY_YEAR[k] && MIXED_POOL_BY_YEAR[k].length);
+  if (!years.length) return [];
+  const total = Math.min(targetTotal, years.reduce((n, y) => n + MIXED_POOL_BY_YEAR[y].length, 0));
+  const perYear = Math.floor(total / years.length);
+  let remainder = total - perYear * years.length;
+  const shuffledYearPools = {};
+  years.forEach(y => { shuffledYearPools[y] = shuffleArray(MIXED_POOL_BY_YEAR[y]); });
+  let picked = [];
+  years.forEach(y => {
+    let take = perYear + (remainder > 0 ? 1 : 0);
+    if (remainder > 0) remainder--;
+    picked = picked.concat(shuffledYearPools[y].slice(0, Math.min(take, shuffledYearPools[y].length)));
+  });
+  if (picked.length < total) {
+    const have = new Set(picked.map(q => q.id));
+    const rest = shuffleArray(years.reduce((acc, y) => acc.concat(MIXED_POOL_BY_YEAR[y]), []).filter(q => !have.has(q.id)));
+    picked = picked.concat(rest.slice(0, total - picked.length));
+  }
+  return shuffleArray(picked);
+}
+
+function buildMixedQuestions() {
+  const byId = {};
+  Object.values(MIXED_POOL_BY_YEAR).forEach(arr => arr.forEach(q => { byId[q.id] = q; }));
+  let ids = [];
+  try { ids = JSON.parse(localStorage.getItem(LS_MIXED_PREFIX + currentUser)) || []; } catch(e){}
+  let questions = ids.map(id => byId[id]).filter(Boolean);
+  if (questions.length === 0) {
+    questions = sampleMixedQuestions(MIXED_COUNT);
+    saveMixedIds(questions.map(q => q.id));
+  }
+  return questions;
+}
 
 function setActiveNav(view) {
   currentView = view;
@@ -663,7 +873,10 @@ function formatLawArticle(text) {
 
 function renderPracticeCard(q, qIndexLabel, isReview) {
   const wrongBook = loadWrongBook();
-  const isWrongBefore = !!wrongBook[q.id];
+  const entry = wrongBook[q.id];
+  const isWrongBefore = !!entry;
+  const isEasyWrong = !!(entry && entry.wrongInMixed && entry.wrongInYears && Object.keys(entry.wrongInYears).length > 0);
+  const isMixed = !!(currentSet && currentSet.mixed && !isReview);
 
   const optionsHtml = q.options.map((opt, i) => {
     return `<button data-opt="${escapeHtml(opt)}" class="option-btn opt">
@@ -675,12 +888,17 @@ function renderPracticeCard(q, qIndexLabel, isReview) {
 
   const flags = [];
   if (isMultiAnswer(q)) flags.push('<span class="flag flag--warn">⚠ 多重給分／送分疑義題</span>');
-  if (isWrongBefore) flags.push('<span class="flag flag--rose">📕 曾錯過</span>');
+  if (isEasyWrong) flags.push('<span class="flag flag--easy">⚠ 易錯題目</span>');
+  else if (isWrongBefore) flags.push('<span class="flag flag--rose">📕 曾錯過</span>');
 
   mainArea.innerHTML = `
   ${isReview ? `<div class="mode-strip">
     <span class="pill pill--rose">📕 錯題練習模式</span>
     <button id="exitReviewPracticeBtn" class="pill pill--ghost">結束練習，返回複習本</button>
+  </div>` : ''}
+  ${isMixed ? `<div class="mode-strip">
+    <span class="pill pill--blue">🎲 綜合測驗</span>
+    <button id="reshuffleMixedBtn" class="pill pill--ghost">重新隨機抽題</button>
   </div>` : ''}
   <div class="card">
     <div class="card__meta">
@@ -726,6 +944,17 @@ function renderPracticeCard(q, qIndexLabel, isReview) {
       showPracticeQuestion();
     });
   }
+
+  const reshuffleBtn = document.getElementById('reshuffleMixedBtn');
+  if (reshuffleBtn) reshuffleBtn.addEventListener('click', () => {
+    if (!confirm('要重新隨機抽 ' + MIXED_COUNT + ' 題嗎？目前的綜合測驗作答進度會重置。')) return;
+    ALL_QUESTIONS = sampleMixedQuestions(MIXED_COUNT);
+    saveMixedIds(ALL_QUESTIONS.map(q => q.id));
+    shuffledOrder = ALL_QUESTIONS.map(q => q.id);
+    currentIndex = 0;
+    saveProgress();
+    showPracticeQuestion();
+  });
 }
 
 function handleAnswer(q, clickedBtn, isReview) {
@@ -747,7 +976,18 @@ function handleAnswer(q, clickedBtn, isReview) {
 
   const wrongBook = loadWrongBook();
   if (!isCorrect) {
-    wrongBook[q.id] = { ts: Date.now(), question: q };
+    const prev = wrongBook[q.id] || {};
+    const entry = {
+      ts: Date.now(),
+      question: q,
+      wrongInMixed: !!prev.wrongInMixed,
+      wrongInYears: Object.assign({}, prev.wrongInYears)
+    };
+    if (!isReview && currentSet) {
+      if (currentSet.mixed) entry.wrongInMixed = true;
+      else entry.wrongInYears[currentSet.key] = true;
+    }
+    wrongBook[q.id] = entry;
     saveWrongBook(wrongBook);
   }
 
@@ -807,6 +1047,7 @@ function renderPracticeView() {
   isReviewPracticeMode = false;
   setActiveNav('practice');
   progressBadge.classList.remove('hidden');
+  if (currentSet) brandSub.textContent = currentSet.label;
   if (shuffledOrder.length === 0) {
     shuffledOrder = ALL_QUESTIONS.map(q => q.id);
   }
@@ -814,9 +1055,18 @@ function renderPracticeView() {
 }
 
 /* ---------- Review Practice Mode ---------- */
+function shuffleArray(arr) {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
 function startReviewPractice() {
   const wrongBook = loadWrongBook();
-  reviewOrder = Object.keys(wrongBook);
+  reviewOrder = shuffleArray(Object.keys(wrongBook));
   if (reviewOrder.length === 0) return;
   reviewIndex = 0;
   isReviewPracticeMode = true;
@@ -836,12 +1086,13 @@ function showReviewPracticeQuestion() {
 /* ---------- Review Book ---------- */
 function buildCategoryTree(items) {
   const tree = {};
-  items.forEach(({ id, q }) => {
+  items.forEach((it) => {
+    const q = it.q;
     const path = (q.law_category || '未分類').split('/').map(s => s.trim()).filter(Boolean);
     let node = tree;
     path.forEach((seg, i) => {
       if (!node[seg]) node[seg] = { __children: {}, __items: [] };
-      if (i === path.length - 1) node[seg].__items.push({ id, q });
+      if (i === path.length - 1) node[seg].__items.push(it);
       node = node[seg].__children;
     });
   });
@@ -880,11 +1131,15 @@ function countAllItems(entry) {
   return count;
 }
 
-function renderWrongItem({ id, q }) {
+function renderWrongItem({ id, q, entry }) {
+  const easy = !!(entry && entry.wrongInMixed && entry.wrongInYears && Object.keys(entry.wrongInYears).length > 0);
   return `
   <div class="witem">
     <div class="witem__top">
-      <span class="qid">${escapeHtml(id)}</span>
+      <span class="witem__badges">
+        <span class="qid">${escapeHtml(id)}</span>
+        ${easy ? '<span class="witem__easy">⚠ 易錯題目</span>' : ''}
+      </span>
       <button class="witem__rm remove-wrong-btn" data-id="${escapeHtml(id)}">移除 ✕</button>
     </div>
     <p class="witem__q">${escapeHtml(q.question)}</p>
@@ -899,8 +1154,9 @@ function renderReviewView() {
   isReviewPracticeMode = false;
   setActiveNav('review');
   progressBadge.classList.add('hidden');
+  brandSub.textContent = '錯題複習本';
   const wrongBook = loadWrongBook();
-  const items = Object.keys(wrongBook).map(id => ({ id, q: wrongBook[id].question }));
+  const items = Object.keys(wrongBook).map(id => ({ id, q: wrongBook[id].question, entry: wrongBook[id] }));
 
   if (items.length === 0) {
     mainArea.innerHTML = `<div class="center-state">
@@ -953,25 +1209,7 @@ function renderReviewView() {
 navPractice.addEventListener('click', renderPracticeView);
 navReview.addEventListener('click', renderReviewView);
 
-fetch(DATA_URL)
-  .then(res => {
-    if (!res.ok) throw new Error('題庫載入失敗：' + res.status);
-    return res.json();
-  })
-  .then(data => {
-    ALL_QUESTIONS = data;
-    renderUserSelectScreen();
-  })
-  .catch(err => {
-    const isSandboxIssue = /Failed to parse URL/i.test(err.message);
-    mainArea.innerHTML = `<div class="errbox">
-      <div class="errbox__emoji">⚠️</div>
-      <p style="font-weight:700;">${escapeHtml(err.message)}</p>
-      ${isSandboxIssue
-        ? `<p class="hint">這通常代表目前是在「沙盒化預覽面板」中開啟，該環境沒有真實網址基準，fetch 無法載入本機檔案。<br>請改用瀏覽器分頁開啟本機伺服器網址（例如 http://localhost:8765/index.html）或正式部署網址，即可正常載入題庫。</p>`
-        : `<p class="hint">請確認 (114-113)_questions.json 與 index.html 位於同一目錄，並以本機伺服器（非 file://）方式開啟。</p>`}
-    </div>`;
-  });
+renderSetSelectScreen();
 </script>
 </body>
 </html>
