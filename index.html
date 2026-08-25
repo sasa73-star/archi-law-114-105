@@ -8,6 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 <style>
 /* ============ THEME TOKENS ============ */
 :root{
@@ -116,6 +117,22 @@ input{font-family:inherit;}
 }
 .iconbtn:active{transform:scale(.9);}
 .iconbtn svg{width:18px;height:18px;}
+/* ---- Google Drive 同步狀態 ---- */
+.iconbtn--sync.is-on{color:var(--ok);border-color:var(--ok-border);background:var(--ok-bg);}
+.iconbtn--sync.is-busy{color:var(--accent);border-color:var(--accent);}
+.iconbtn--sync.is-busy svg{animation:syncspin 1s linear infinite;}
+.iconbtn--sync.is-err{color:var(--bad);border-color:var(--bad-border);background:var(--bad-bg);}
+@keyframes syncspin{to{transform:rotate(360deg);}}
+@media (prefers-reduced-motion:reduce){.iconbtn--sync.is-busy svg{animation:none;}}
+.synctip{
+  position:fixed;left:50%;transform:translateX(-50%);bottom:22px;z-index:120;
+  max-width:min(92vw,420px);padding:11px 16px;border-radius:12px;
+  background:var(--law-bg);color:var(--law-text);font-size:13px;line-height:1.6;
+  box-shadow:0 6px 26px rgba(0,0,0,.28);opacity:0;pointer-events:none;
+  transition:opacity .2s,transform .2s;
+}
+.synctip.show{opacity:1;transform:translateX(-50%) translateY(-4px);}
+.synctip b{color:var(--law-accent);}
 .user-chip{
   display:flex;align-items:center;gap:6px;max-width:130px;
   padding:6px 11px;border-radius:999px;font-size:12.5px;font-weight:700;
@@ -229,6 +246,10 @@ main{
 .pill--blue{background:var(--accent-soft);color:var(--accent);}
 .pill--ghost{background:transparent;color:var(--text-faint);text-decoration:underline;text-underline-offset:2px;font-weight:600;}
 
+/* 字級縮放：只作用在「閱讀內容」（題目、選項、解析、法條、錯題本），
+   標題列與按鈕維持原大小。設定存在各裝置本機，不進雲端同步。 */
+:root{ --fs:1; }
+
 .card{
   background:var(--surface);border:1px solid var(--border);border-radius:20px;
   padding:18px 17px;box-shadow:var(--shadow);margin-bottom:16px;
@@ -242,7 +263,7 @@ main{
 .flag--rose{background:var(--bad-bg);color:var(--bad);}
 .flag--easy{background:var(--accent);color:#fff;}
 .qtext{
-  font-size:17px;font-weight:500;line-height:1.62;margin:0 0 16px;
+  font-size:calc(17px * var(--fs));font-weight:500;line-height:1.62;margin:0 0 16px;
   letter-spacing:.005em;overflow-wrap:anywhere;word-break:break-word;
   white-space:pre-wrap;text-wrap:pretty;
 }
@@ -251,15 +272,15 @@ main{
 .opt{
   display:flex;align-items:flex-start;gap:11px;text-align:left;width:100%;
   background:var(--surface-2);border:1.5px solid var(--border);border-radius:15px;
-  padding:13px 14px;min-height:52px;font-size:14.5px;line-height:1.5;color:var(--text);
+  padding:13px 14px;min-height:52px;font-size:calc(14.5px * var(--fs));line-height:1.5;color:var(--text);
   transition:transform .1s,border-color .15s,background .2s,box-shadow .15s;
   position:relative;overflow-wrap:anywhere;word-break:break-word;
 }
 .opt:not(:disabled):active{transform:scale(.98);border-color:var(--accent);box-shadow:0 4px 14px color-mix(in srgb,var(--accent) 18%,transparent);}
 .opt__badge{
-  width:25px;height:25px;flex:none;border-radius:8px;background:var(--surface);
+  width:calc(25px * var(--fs));height:calc(25px * var(--fs));flex:none;border-radius:8px;background:var(--surface);
   border:1px solid var(--border-strong);color:var(--text-muted);
-  display:flex;align-items:center;justify-content:center;font-weight:900;font-size:12.5px;
+  display:flex;align-items:center;justify-content:center;font-weight:900;font-size:calc(12.5px * var(--fs));
   transition:background .2s,color .2s,border-color .2s;
 }
 .opt__text{flex:1;padding-top:2px;font-weight:500;}
@@ -283,32 +304,32 @@ main{
 .banner{border-radius:14px;padding:13px 14px;border:1px solid transparent;}
 .banner--ok{background:var(--ok-bg);border-color:var(--ok-border);}
 .banner--bad{background:var(--bad-bg);border-color:var(--bad-border);}
-.banner__head{font-weight:900;font-size:15px;margin:0 0 4px;display:flex;align-items:center;gap:7px;}
+.banner__head{font-weight:900;font-size:calc(15px * var(--fs));margin:0 0 4px;display:flex;align-items:center;gap:7px;}
 .banner--ok .banner__head{color:var(--ok);}
 .banner--bad .banner__head{color:var(--bad);}
-.banner__ans{font-size:13.5px;color:var(--text);}
+.banner__ans{font-size:calc(13.5px * var(--fs));color:var(--text);}
 .banner__ans b{font-weight:900;}
-.banner__reason{font-size:12px;color:var(--text-muted);margin-top:4px;overflow-wrap:anywhere;}
+.banner__reason{font-size:calc(12px * var(--fs));color:var(--text-muted);margin-top:4px;overflow-wrap:anywhere;}
 
 .alert{border-radius:14px;padding:13px 14px;border:1px solid transparent;}
-.alert__label{font-size:12px;font-weight:900;margin:0 0 6px;display:flex;align-items:center;gap:6px;letter-spacing:.02em;}
-.alert__body{font-size:13.5px;line-height:1.62;color:var(--text);overflow-wrap:anywhere;word-break:break-word;text-wrap:pretty;}
+.alert__label{font-size:calc(12px * var(--fs));font-weight:900;margin:0 0 6px;display:flex;align-items:center;gap:6px;letter-spacing:.02em;}
+.alert__body{font-size:calc(13.5px * var(--fs));line-height:1.62;color:var(--text);overflow-wrap:anywhere;word-break:break-word;text-wrap:pretty;}
 .alert--warn{background:var(--warn-bg);border-color:var(--warn-border);}
 .alert--warn .alert__label{color:var(--warn);}
 .alert--info{background:var(--info-bg);border-color:var(--info-border);}
 .alert--info .alert__label{color:var(--info);}
 .alert--neutral{background:var(--surface-2);border-color:var(--border);}
 .alert--neutral .alert__label{color:var(--text-muted);}
-.alert__meta{font-size:11.5px;color:var(--text-faint);margin-top:8px;}
+.alert__meta{font-size:calc(11.5px * var(--fs));color:var(--text-faint);margin-top:8px;}
 
 /* law article = dark document block */
 .lawblock{
   background:var(--law-bg);border-radius:14px;padding:14px 15px;
   border:1px solid color-mix(in srgb,var(--law-bg) 70%,#000);
 }
-.lawblock__label{font-size:12px;font-weight:900;color:var(--law-accent);margin:0 0 7px;display:flex;align-items:center;gap:6px;letter-spacing:.04em;}
+.lawblock__label{font-size:calc(12px * var(--fs));font-weight:900;color:var(--law-accent);margin:0 0 7px;display:flex;align-items:center;gap:6px;letter-spacing:.04em;}
 .lawblock__body{
-  font-family:"Microsoft JhengHei","Microsoft JhengHei UI",sans-serif;font-size:14.5px;line-height:1.78;color:var(--law-text);
+  font-family:"Microsoft JhengHei","Microsoft JhengHei UI",sans-serif;font-size:calc(14.5px * var(--fs));line-height:1.78;color:var(--law-text);
   overflow-wrap:anywhere;word-break:break-word;text-wrap:pretty;
 }
 .lawblock__body .law-art{color:var(--law-accent);font-weight:700;}
@@ -355,8 +376,8 @@ main{
 .witem__top .qid{color:var(--bad);background:var(--bad-bg);padding:3px 8px;border-radius:7px;}
 .witem__rm{font-size:11.5px;font-weight:700;color:var(--text-faint);padding:4px 8px;border-radius:8px;transition:background .15s,color .15s;}
 .witem__rm:active{background:var(--bad-bg);color:var(--bad);}
-.witem__q{font-size:13.5px;font-weight:700;line-height:1.55;margin:0 0 7px;overflow-wrap:anywhere;word-break:break-word;white-space:pre-wrap;}
-.witem__line{font-size:12px;line-height:1.55;margin:3px 0;overflow-wrap:anywhere;word-break:break-word;}
+.witem__q{font-size:calc(13.5px * var(--fs));font-weight:700;line-height:1.55;margin:0 0 7px;overflow-wrap:anywhere;word-break:break-word;white-space:pre-wrap;}
+.witem__line{font-size:calc(12px * var(--fs));line-height:1.55;margin:3px 0;overflow-wrap:anywhere;word-break:break-word;}
 .witem__line .lbl{font-weight:700;}
 .witem__line.ans{color:var(--text-muted);}
 .witem__line.law{color:var(--info);}
@@ -388,6 +409,12 @@ main{
     </div>
     <div class="appbar__right">
       <div id="progressBadge" class="progress-pill hidden"></div>
+      <button id="fontScaleBtn" class="iconbtn" aria-label="調整文字大小" title="調整文字大小">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 18l4.5-11L12 18"/><path d="M4.4 14.5h6.2"/><path d="M14 18l3.2-7.5L20.4 18"/><path d="M15 15.7h4.4"/></svg>
+      </button>
+      <button id="cloudSyncBtn" class="iconbtn iconbtn--sync" aria-label="Google 雲端同步" title="Google 雲端同步">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 1-9 9 9 9 0 0 1-8.5-6"/><path d="M3 12a9 9 0 0 1 9-9 9 9 0 0 1 8.5 6"/><path d="M3 17v-5h5"/><path d="M21 7v5h-5"/></svg>
+      </button>
       <button id="themeToggle" class="iconbtn" aria-label="切換深淺色"></button>
       <button id="exportDataBtn" class="iconbtn hidden" aria-label="匯出備份檔" title="匯出我的進度與錯題本">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>
@@ -408,6 +435,8 @@ main{
 </div>
 
 <input type="file" id="importFileInput" accept="application/json,.json" class="hidden" />
+
+<div id="syncTip" class="synctip" role="status" aria-live="polite"></div>
 
 
 <nav id="bottomNav" class="tabbar hidden">
@@ -485,6 +514,38 @@ themeToggle.addEventListener('click', () => {
   applyTheme(next);
 });
 
+/* ---------- 文字大小 ----------
+   只影響閱讀內容。設定存在這台裝置，不進雲端同步，
+   所以手機可以調大、電腦維持正常，兩邊互不干擾。 */
+const LS_FONTSCALE_KEY = 'law_quiz_fontscale_v1';
+const FONT_LEVELS = [
+  { name: '標準', v: 1 },
+  { name: '大',   v: 1.12 },
+  { name: '特大', v: 1.26 },
+  { name: '超大', v: 1.42 }
+];
+const fontScaleBtn = document.getElementById('fontScaleBtn');
+let fontLevel = 0;
+
+function applyFontLevel(i, announce) {
+  fontLevel = Math.max(0, Math.min(FONT_LEVELS.length - 1, i));
+  const lv = FONT_LEVELS[fontLevel];
+  document.documentElement.style.setProperty('--fs', lv.v);
+  fontScaleBtn.title = '文字大小：' + lv.name + '（點擊切換）';
+  try { localStorage.setItem(LS_FONTSCALE_KEY, String(fontLevel)); } catch(e) {}
+  if (announce) tip('文字大小：<b>' + lv.name + '</b>', 1600);
+}
+(function initFontScale() {
+  let saved = null;
+  try { saved = localStorage.getItem(LS_FONTSCALE_KEY); } catch(e) {}
+  /* 沒設定過時，手機預設放大一級 */
+  const def = (window.innerWidth <= 520) ? 1 : 0;
+  applyFontLevel(saved === null ? def : parseInt(saved, 10) || 0, false);
+})();
+fontScaleBtn.addEventListener('click', () => {
+  applyFontLevel((fontLevel + 1) % FONT_LEVELS.length, true);
+});
+
 /* ---------- Storage ---------- */
 function loadUserList() {
   try { return JSON.parse(localStorage.getItem(LS_USERS_KEY)) || []; } catch(e) { return []; }
@@ -492,17 +553,57 @@ function loadUserList() {
 function saveUserList(list) {
   localStorage.setItem(LS_USERS_KEY, JSON.stringify(list));
 }
+
+/* 使用者的建立／刪除紀錄 { 名稱: { ts, deleted? } }。
+   使用者清單只是名字陣列，合併時無法表達「刪除」——這份 meta 才是同步的依據，
+   刪除留下墓碑，另一台裝置的舊清單就不會把已刪除的使用者復活。 */
+const LS_USERMETA_KEY = 'law_quiz_usermeta_v1';
+function loadUserMeta() {
+  try { return JSON.parse(localStorage.getItem(LS_USERMETA_KEY)) || {}; } catch(e) { return {}; }
+}
+function saveUserMeta(m) {
+  try { localStorage.setItem(LS_USERMETA_KEY, JSON.stringify(m)); } catch(e) {}
+}
+function markUser(name, deleted) {
+  const m = loadUserMeta();
+  m[name] = deleted ? { deleted: true, ts: Date.now() } : { ts: Date.now() };
+  saveUserMeta(m);
+}
+function purgeUserLocal(name) {
+  localStorage.removeItem(LS_WRONG_PREFIX + name);
+  localStorage.removeItem(LS_MIXED_PREFIX + name);
+  const pfx = LS_PROGRESS_PREFIX + name + '__';
+  Object.keys(localStorage).forEach(k => { if (k.indexOf(pfx) === 0) localStorage.removeItem(k); });
+}
+
 function storageKeySuffix() {
   return currentUser + '__' + (currentSet ? currentSet.key : '');
 }
-/* 錯題複習本不分年度題庫，所有年度共用同一份紀錄，方便跨年度一起複習 */
+/* 錯題複習本不分年度題庫，所有年度共用同一份紀錄，方便跨年度一起複習。
+   為了雲端同步能正確處理「刪除」，被移除的題目不是真的刪掉，而是留下
+   { deleted:true, ts } 的墓碑；顯示用的 loadWrongBook() 會濾掉墓碑。 */
+function loadWrongBookRaw(user) {
+  const u = user || currentUser;
+  if (!u) return {};
+  try { return JSON.parse(localStorage.getItem(LS_WRONG_PREFIX + u)) || {}; } catch(e) { return {}; }
+}
 function loadWrongBook() {
-  if (!currentUser) return {};
-  try { return JSON.parse(localStorage.getItem(LS_WRONG_PREFIX + currentUser)) || {}; } catch(e) { return {}; }
+  const raw = loadWrongBookRaw();
+  const out = {};
+  Object.keys(raw).forEach(k => { if (raw[k] && !raw[k].deleted) out[k] = raw[k]; });
+  return out;
 }
 function saveWrongBook(book) {
   if (!currentUser) return;
-  localStorage.setItem(LS_WRONG_PREFIX + currentUser, JSON.stringify(book));
+  const raw = loadWrongBookRaw();
+  const out = Object.assign({}, book);
+  const now = Date.now();
+  Object.keys(raw).forEach(k => {
+    if (k in out) return;
+    out[k] = raw[k] && raw[k].deleted ? raw[k] : { deleted: true, ts: now };
+  });
+  localStorage.setItem(LS_WRONG_PREFIX + currentUser, JSON.stringify(out));
+  scheduleCloudPush();
 }
 function loadProgress() {
   if (!currentUser) return { index: 0 };
@@ -510,7 +611,10 @@ function loadProgress() {
 }
 function saveProgress() {
   if (!currentUser) return;
-  localStorage.setItem(LS_PROGRESS_PREFIX + storageKeySuffix(), JSON.stringify({ index: currentIndex }));
+  /* ts 供雲端同步比較新舊；舊資料沒有 ts，合併時視為最舊 */
+  localStorage.setItem(LS_PROGRESS_PREFIX + storageKeySuffix(),
+    JSON.stringify({ index: currentIndex, ts: Date.now() }));
+  scheduleCloudPush();
 }
 
 /* ---------- Export / Import ---------- */
@@ -578,6 +682,366 @@ importFileInput.addEventListener('change', (e) => {
   if (file) importUserDataFromFile(file);
   importFileInput.value = '';
 });
+
+/* ==================================================================
+   Google Drive 雲端同步
+   ------------------------------------------------------------------
+   進度存在 Drive 的 appDataFolder（隱藏的專屬資料夾，Drive 介面看不到，
+   也碰不到你其他檔案）。權限範圍只有 drive.appdata。
+   localStorage 永遠是主要來源，雲端只是同步層——沒網路 / 沒登入時
+   一切照常運作，只是不會同步。
+   ================================================================== */
+const GOOGLE_CLIENT_ID = '942430574491-ssp5mtn63bvhukn5o3sln7uas3jqhfsk.apps.googleusercontent.com';
+const DRIVE_SCOPE = 'https://www.googleapis.com/auth/drive.appdata';
+const SYNC_FILE_NAME = 'law_quiz_sync.json';
+const LS_TOKEN_KEY = 'law_quiz_gtoken_v1';
+const LS_LINKED_KEY = 'law_quiz_glinked_v1';
+
+const cloudSyncBtn = document.getElementById('cloudSyncBtn');
+const syncTipEl = document.getElementById('syncTip');
+
+let gTokenClient = null;
+let gToken = null;          // { access_token, exp }
+let cloudFileId = null;
+let pushTimer = null;
+let lastPushedSig = null;
+let syncing = false;
+let lastRemote = null;          // 上次同步後的內容，配合 modifiedTime 省下重複下載
+let lastRemoteModified = null;
+
+function tip(html, ms) {
+  syncTipEl.innerHTML = html;
+  syncTipEl.classList.add('show');
+  clearTimeout(tip._t);
+  tip._t = setTimeout(() => syncTipEl.classList.remove('show'), ms || 3200);
+}
+function setSyncState(state, title) {
+  cloudSyncBtn.classList.remove('is-on', 'is-busy', 'is-err');
+  if (state !== 'off') cloudSyncBtn.classList.add('is-' + state);
+  cloudSyncBtn.title = title || 'Google 雲端同步';
+}
+
+/* ---------- 權杖 ---------- */
+function loadToken() {
+  try {
+    const t = JSON.parse(localStorage.getItem(LS_TOKEN_KEY));
+    if (t && t.access_token && t.exp > Date.now() + 60000) return t;
+  } catch(e) {}
+  return null;
+}
+function saveToken(resp) {
+  gToken = { access_token: resp.access_token, exp: Date.now() + (resp.expires_in || 3600) * 1000 };
+  try { localStorage.setItem(LS_TOKEN_KEY, JSON.stringify(gToken)); } catch(e) {}
+  try { localStorage.setItem(LS_LINKED_KEY, '1'); } catch(e) {}
+}
+function clearToken() {
+  gToken = null;
+  try { localStorage.removeItem(LS_TOKEN_KEY); } catch(e) {}
+}
+function isLinked() {
+  try { return localStorage.getItem(LS_LINKED_KEY) === '1'; } catch(e) { return false; }
+}
+
+function ensureTokenClient() {
+  if (gTokenClient) return true;
+  if (!(window.google && google.accounts && google.accounts.oauth2)) return false;
+  gTokenClient = google.accounts.oauth2.initTokenClient({
+    client_id: GOOGLE_CLIENT_ID,
+    scope: DRIVE_SCOPE,
+    callback: (resp) => {
+      if (resp && resp.access_token) {
+        saveToken(resp);
+        cloudSync({ announce: true });
+      } else {
+        setSyncState('err', '登入失敗');
+        tip('登入失敗，請再試一次。');
+      }
+    },
+    error_callback: (err) => {
+      setSyncState(isLinked() ? 'err' : 'off', '尚未登入');
+      /* 使用者自己關掉視窗就安靜略過，不要跳訊息 */
+      if (err && (err.type === 'popup_closed' || err.type === 'popup_failed_to_open')) return;
+      tip('無法開啟 Google 登入視窗，請確認瀏覽器沒有封鎖彈出視窗。', 5000);
+    }
+  });
+  return true;
+}
+
+/* 要求權杖。silent=true 時不顯示同意畫面，用於開頁自動續期 */
+function requestToken(silent) {
+  if (!ensureTokenClient()) {
+    tip('Google 登入元件尚未載入完成，請稍候再試。');
+    return;
+  }
+  setSyncState('busy', '連線中…');
+  gTokenClient.requestAccessToken({ prompt: silent ? '' : 'consent' });
+}
+
+/* ---------- Drive API ---------- */
+async function driveFetch(url, opts) {
+  const o = Object.assign({}, opts);
+  o.headers = Object.assign({}, o.headers, { Authorization: 'Bearer ' + gToken.access_token });
+  const r = await fetch(url, o);
+  if (r.status === 401) { clearToken(); throw new Error('TOKEN_EXPIRED'); }
+  if (!r.ok) throw new Error('Drive API ' + r.status);
+  return r;
+}
+/* 只取檔案資訊（很小），用 modifiedTime 判斷雲端有沒有變，
+   沒變就不必重新下載整包資料——密集使用時可省下大量流量 */
+async function driveStat() {
+  const q = encodeURIComponent("name='" + SYNC_FILE_NAME + "' and trashed=false");
+  const r = await driveFetch('https://www.googleapis.com/drive/v3/files?spaces=appDataFolder&fields=files(id,name,modifiedTime)&q=' + q);
+  const d = await r.json();
+  const f = (d.files && d.files[0]) || null;
+  cloudFileId = f ? f.id : null;
+  return f;
+}
+async function driveDownload(id) {
+  const r = await driveFetch('https://www.googleapis.com/drive/v3/files/' + id + '?alt=media');
+  return r.json();
+}
+async function driveSave(id, payload) {
+  const content = JSON.stringify(payload);
+  if (id) {
+    const r = await driveFetch('https://www.googleapis.com/upload/drive/v3/files/' + id + '?uploadType=media&fields=id,modifiedTime', {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: content
+    });
+    return r.json();
+  }
+  const boundary = 'quizsync' + Date.now();
+  const meta = { name: SYNC_FILE_NAME, parents: ['appDataFolder'] };
+  const body =
+    '--' + boundary + '\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n' + JSON.stringify(meta) +
+    '\r\n--' + boundary + '\r\nContent-Type: application/json\r\n\r\n' + content +
+    '\r\n--' + boundary + '--';
+  const r = await driveFetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,modifiedTime', {
+    method: 'POST', headers: { 'Content-Type': 'multipart/related; boundary=' + boundary }, body
+  });
+  const d = await r.json();
+  cloudFileId = d.id;
+  return d;
+}
+
+/* ---------- 本機資料的收集與寫回 ---------- */
+function collectLocal() {
+  const users = loadUserList();
+  const wrong = {}, progress = {}, mixed = {};
+  users.forEach(u => {
+    const w = loadWrongBookRaw(u);
+    if (Object.keys(w).length) wrong[u] = w;
+  });
+  for (let i = 0; i < localStorage.length; i++) {
+    const k = localStorage.key(i);
+    if (!k) continue;
+    if (k.indexOf(LS_PROGRESS_PREFIX) === 0) {
+      try { progress[k.slice(LS_PROGRESS_PREFIX.length)] = JSON.parse(localStorage.getItem(k)); } catch(e) {}
+    } else if (k.indexOf(LS_MIXED_PREFIX) === 0) {
+      try { mixed[k.slice(LS_MIXED_PREFIX.length)] = JSON.parse(localStorage.getItem(k)); } catch(e) {}
+    }
+  }
+  return { type: 'law_quiz_cloud', version: 2, updatedAt: Date.now(),
+           users, usersMeta: loadUserMeta(), wrong, progress, mixed };
+}
+
+function mergePayload(local, remote) {
+  if (!remote || remote.type !== 'law_quiz_cloud') return local;
+  const out = { type: 'law_quiz_cloud', version: 2, updatedAt: Date.now(),
+                users: [], usersMeta: {}, wrong: {}, progress: {}, mixed: {} };
+
+  /* 使用者：以 usersMeta 的時間為準，較新的動作（建立或刪除）勝出。
+     舊版雲端檔沒有 usersMeta，那些名字視為「存在、時間 0」，
+     所以任何一邊的刪除墓碑（ts>0）都會蓋過它。 */
+  const lm = local.usersMeta || {}, rm = remote.usersMeta || {};
+  const names = new Set([].concat(local.users || [], remote.users || [],
+                                  Object.keys(lm), Object.keys(rm)));
+  names.forEach(n => {
+    const a = lm[n], b = rm[n];
+    let win;
+    if (a && b) win = ((b.ts || 0) > (a.ts || 0)) ? b : a;
+    else win = a || b || { ts: 0 };          /* 舊資料：存在，時間最早 */
+    out.usersMeta[n] = win;
+    if (!win.deleted) out.users.push(n);
+  });
+  const removed = Object.keys(out.usersMeta).filter(n => out.usersMeta[n].deleted);
+
+  /* 錯題本：逐題比 ts 取新的；墓碑同樣參與比較，所以刪除不會被復活 */
+  const allU = new Set([].concat(Object.keys(local.wrong || {}), Object.keys(remote.wrong || {})));
+  allU.forEach(u => {
+    const a = (local.wrong || {})[u] || {}, b = (remote.wrong || {})[u] || {};
+    const m = {};
+    new Set([].concat(Object.keys(a), Object.keys(b))).forEach(id => {
+      const ea = a[id], eb = b[id];
+      if (!ea) { m[id] = eb; return; }
+      if (!eb) { m[id] = ea; return; }
+      m[id] = ((eb.ts || 0) > (ea.ts || 0)) ? eb : ea;
+    });
+    out.wrong[u] = m;
+  });
+
+  /* 各年度進度：比 ts 取新的（舊資料沒 ts 視為最舊） */
+  const allP = new Set([].concat(Object.keys(local.progress || {}), Object.keys(remote.progress || {})));
+  allP.forEach(k => {
+    const a = (local.progress || {})[k], b = (remote.progress || {})[k];
+    if (!a) { out.progress[k] = b; return; }
+    if (!b) { out.progress[k] = a; return; }
+    out.progress[k] = ((b.ts || 0) > (a.ts || 0)) ? b : a;
+  });
+
+  /* 綜合測驗的抽題順序：以本機為準，本機沒有才用雲端的 */
+  out.mixed = Object.assign({}, remote.mixed || {}, local.mixed || {});
+
+  /* 已刪除的使用者，連同他的錯題本、進度、綜合測驗紀錄一併清掉，
+     否則資料會永遠留在雲端檔裡，而且每次同步又被寫回各裝置 */
+  removed.forEach(n => {
+    delete out.wrong[n];
+    delete out.mixed[n];
+    const pfx = n + '__';
+    Object.keys(out.progress).forEach(k => { if (k.indexOf(pfx) === 0) delete out.progress[k]; });
+  });
+  return out;
+}
+
+function applyMerged(m) {
+  saveUserMeta(m.usersMeta || {});
+  /* 正在使用中的帳號即使在別台被刪除，也先留著不動，
+     避免作答到一半資料突然消失；離開這個帳號後下次同步才會生效 */
+  const list = (m.users || []).slice();
+  if (currentUser && list.indexOf(currentUser) === -1) list.push(currentUser);
+  saveUserList(list);
+
+  Object.keys(m.usersMeta || {}).forEach(n => {
+    if (m.usersMeta[n].deleted && n !== currentUser) purgeUserLocal(n);
+  });
+
+  Object.keys(m.wrong || {}).forEach(u => {
+    localStorage.setItem(LS_WRONG_PREFIX + u, JSON.stringify(m.wrong[u]));
+  });
+  Object.keys(m.progress || {}).forEach(k => {
+    if (m.progress[k]) localStorage.setItem(LS_PROGRESS_PREFIX + k, JSON.stringify(m.progress[k]));
+  });
+  Object.keys(m.mixed || {}).forEach(k => {
+    if (m.mixed[k]) localStorage.setItem(LS_MIXED_PREFIX + k, JSON.stringify(m.mixed[k]));
+  });
+}
+
+function payloadSig(p) {
+  return JSON.stringify([p.users, p.usersMeta || {}, p.wrong, p.progress]);
+}
+
+/* ---------- 主流程 ---------- */
+async function cloudSync(opts) {
+  opts = opts || {};
+  if (syncing) return;
+  if (!gToken) gToken = loadToken();
+  if (!gToken) { setSyncState(isLinked() ? 'err' : 'off', '尚未登入'); return; }
+
+  syncing = true;
+  setSyncState('busy', '同步中…');
+  try {
+    const stat = await driveStat();
+    let remote = null;
+    if (stat) {
+      if (lastRemote && lastRemoteModified && stat.modifiedTime === lastRemoteModified) {
+        remote = lastRemote;            /* 雲端沒被別台裝置改過，省下一次下載 */
+      } else {
+        try { remote = await driveDownload(stat.id); } catch(e) { remote = null; }
+      }
+    }
+
+    const local = collectLocal();
+    const merged = mergePayload(local, remote);
+    applyMerged(merged);
+
+    const sig = payloadSig(merged);
+    if (sig !== payloadSig(remote || { users: [], wrong: {}, progress: {} })) {
+      const saved = await driveSave(stat ? stat.id : null, merged);
+      lastRemoteModified = saved && saved.modifiedTime ? saved.modifiedTime : null;
+    } else {
+      lastRemoteModified = stat ? stat.modifiedTime : null;
+    }
+    lastRemote = merged;
+    lastPushedSig = sig;
+
+    setSyncState('on', '已同步 · ' + new Date().toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' }));
+    if (opts.announce) {
+      const n = Object.keys(merged.wrong || {}).reduce((s, u) =>
+        s + Object.keys(merged.wrong[u]).filter(k => !merged.wrong[u][k].deleted).length, 0);
+      tip('<b>已連結 Google 雲端</b><br>使用者 ' + (merged.users || []).length +
+          ' 位 · 錯題 ' + n + ' 題已同步', 4200);
+    }
+    /* 停在選擇畫面時才重繪，避免把正在作答的人打斷 */
+    if (opts.refresh && !currentUser) renderSetSelectScreen();
+  } catch (err) {
+    if (err && err.message === 'TOKEN_EXPIRED') {
+      setSyncState('err', '登入已過期');
+      tip('Google 登入已過期，點右上角同步圖示重新登入即可。<br>你的進度都還在這台裝置上。', 5000);
+    } else {
+      setSyncState('err', '同步失敗');
+      tip('同步失敗：' + (err && err.message ? err.message : '未知錯誤') + '<br>進度仍安全保存在本機。', 5000);
+    }
+  } finally {
+    syncing = false;
+  }
+}
+
+/* 作答 / 換題後延遲推送，避免每按一下就打一次 API */
+function scheduleCloudPush() {
+  if (!gToken && !loadToken()) return;
+  clearTimeout(pushTimer);
+  pushTimer = setTimeout(() => {
+    const sig = payloadSig(collectLocal());
+    if (sig === lastPushedSig) return;   /* 沒變就不推 */
+    cloudSync();
+  }, 6000);
+}
+
+function cloudDisconnect() {
+  const tk = gToken || loadToken();
+  if (tk && window.google && google.accounts && google.accounts.oauth2) {
+    try { google.accounts.oauth2.revoke(tk.access_token); } catch(e) {}
+  }
+  clearToken();
+  cloudFileId = null;
+  lastPushedSig = null;
+  try { localStorage.removeItem(LS_LINKED_KEY); } catch(e) {}
+  setSyncState('off', '尚未登入');
+  tip('已中斷連結。<br>這台裝置的進度不受影響，仍保留在本機。', 4200);
+}
+
+function initCloudSync() {
+  setSyncState('off', isLinked() ? '點擊重新連線' : '點擊以連結 Google 雲端同步');
+
+  cloudSyncBtn.addEventListener('click', () => {
+    const tk = gToken || loadToken();
+    if (!tk) { requestToken(isLinked()); return; }   /* 曾經連結過就先試靜默續期 */
+    if (confirm('已連結 Google 雲端同步。\n\n按「確定」立即同步一次\n按「取消」中斷連結')) {
+      cloudSync({ announce: true, refresh: true });
+    } else {
+      cloudDisconnect();
+    }
+  });
+
+  /* 開頁時：曾經連結過就自動同步一次 */
+  if (isLinked()) {
+    const tk = loadToken();
+    if (tk) { gToken = tk; setTimeout(() => cloudSync({ refresh: true }), 800); }
+    else { setTimeout(() => requestToken(true), 1200); }   /* 靜默續期 */
+  }
+
+  /* 切走分頁 / 關閉前把最後的變更推上去。
+     手機（尤其 iOS）強制關閉 App 時 visibilitychange 不一定會觸發，
+     所以同時掛 pagehide 作為保險。 */
+  const flushOnLeave = () => {
+    clearTimeout(pushTimer);
+    if (!(gToken || loadToken())) return;
+    if (payloadSig(collectLocal()) === lastPushedSig) return;
+    cloudSync();
+  };
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden') flushOnLeave();
+  });
+  window.addEventListener('pagehide', flushOnLeave);
+}
 
 /* ---------- User Selection ---------- */
 function renderUserSelectScreen() {
@@ -647,13 +1111,10 @@ function handleDeleteUser(name) {
   if (!confirm(`確定要刪除使用者「${name}」嗎？\n此操作會同時清除該使用者在所有題庫的作答進度與錯題複習本，且無法復原。`)) return;
   const users = loadUserList().filter(u => u !== name);
   saveUserList(users);
-  localStorage.removeItem(LS_WRONG_PREFIX + name);
-  localStorage.removeItem(LS_MIXED_PREFIX + name);
-  localStorage.removeItem(LS_PROGRESS_PREFIX + name + '__mixed');
-  QUESTION_SETS.forEach(set => {
-    localStorage.removeItem(LS_PROGRESS_PREFIX + name + '__' + set.key);
-  });
+  markUser(name, true);          /* 留下墓碑，刪除才能同步到其他裝置 */
+  purgeUserLocal(name);
   renderUserSelectScreen();
+  scheduleCloudPush();
 }
 
 function handleCreateUser() {
@@ -665,7 +1126,9 @@ function handleCreateUser() {
     users.push(name);
     saveUserList(users);
   }
+  markUser(name, false);         /* 記下建立時間；同名若曾被刪除，這次較新會蓋掉墓碑 */
   enterAsUser(name);
+  scheduleCloudPush();
 }
 
 function enterAsUser(name) {
@@ -1210,6 +1673,7 @@ navPractice.addEventListener('click', renderPracticeView);
 navReview.addEventListener('click', renderReviewView);
 
 renderSetSelectScreen();
+initCloudSync();
 </script>
 </body>
 </html>
