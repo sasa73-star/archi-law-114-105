@@ -471,6 +471,14 @@ const LS_LASTSET_KEY = 'law_quiz_lastset_v1';
 const LS_MIXED_PREFIX = 'law_quiz_mixed_v1__';
 const MIXED_COUNT = 80;
 
+/* 題庫檔更新後避免瀏覽器沿用舊快取。
+   必須是固定字串（不可用 Date.now()），否則每次開頁都會重新下載全部題庫、
+   GitHub Pages 的 CDN 快取也會完全失效。更新題庫 JSON 後把日期往後改一次即可。 */
+const DATA_VERSION = '20260825c';
+function dataUrl(file) {
+  return encodeURI(file) + '?v=' + DATA_VERSION;
+}
+
 let ALL_QUESTIONS = [];
 let MIXED_POOL_BY_YEAR = {};
 let currentIndex = 0;
@@ -1217,7 +1225,7 @@ function renderSetSelectScreen() {
 
 function loadQuestionSet(set) {
   mainArea.innerHTML = `<div class="loadwrap"><div class="spinner"></div><p>正在載入題庫…</p></div>`;
-  fetch(encodeURI(set.file))
+  fetch(dataUrl(set.file))
     .then(res => {
       if (!res.ok) throw new Error('題庫載入失敗：' + res.status);
       return res.json();
@@ -1247,7 +1255,7 @@ function loadMixedSet() {
   mainArea.innerHTML = `<div class="loadwrap"><div class="spinner"></div><p>正在載入各年度題庫…</p></div>`;
   brandSub.textContent = '綜合測驗';
   Promise.all(QUESTION_SETS.map(set =>
-    fetch(encodeURI(set.file))
+    fetch(dataUrl(set.file))
       .then(res => res.ok ? res.json() : null)
       .then(data => ({ set, data: Array.isArray(data) ? data : null }))
       .catch(() => ({ set, data: null }))
