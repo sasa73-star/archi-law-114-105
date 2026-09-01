@@ -474,7 +474,7 @@ const MIXED_COUNT = 80;
 /* 題庫檔更新後避免瀏覽器沿用舊快取。
    必須是固定字串（不可用 Date.now()），否則每次開頁都會重新下載全部題庫、
    GitHub Pages 的 CDN 快取也會完全失效。更新題庫 JSON 後把日期往後改一次即可。 */
-const DATA_VERSION = '20260825c';
+const DATA_VERSION = '20260901';
 function dataUrl(file) {
   return encodeURI(file) + '?v=' + DATA_VERSION;
 }
