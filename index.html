@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="theme-color" content="#bd6437">
-<title>營建法規刷題 113–114</title>
+<title>營建法規刷題 105–114</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
@@ -27,6 +27,7 @@
   --ok:#3c8a55; --ok-bg:#e6f1e6; --ok-border:#c2e0c5;
   --bad:#c44f3e; --bad-bg:#fae5e0; --bad-border:#f0c8bf;
   --warn:#9a6a0f; --warn-bg:#fbeecb; --warn-border:#eed79a;
+  --now:#c2570a; --now-bg:#fdeadb; --now-border:#f0b98a;
   --info:#3a6396; --info-bg:#e6eef6; --info-border:#c6d6e8;
   --law-bg:#2c2922; --law-2:#3a352b; --law-text:#e9e1d2; --law-accent:#e3a974;
   --shadow-sm:0 1px 2px rgba(60,48,30,.06);
@@ -49,6 +50,7 @@ html[data-theme="dark"]{
   --ok:#6dbe83; --ok-bg:#253629; --ok-border:#3a5841;
   --bad:#e08272; --bad-bg:#392622; --bad-border:#5b3932;
   --warn:#e0b45c; --warn-bg:#393015; --warn-border:#5b4c23;
+  --now:#f0995a; --now-bg:#3a2617; --now-border:#6b4426;
   --info:#85aedb; --info-bg:#212f3e; --info-border:#37506a;
   --law-bg:#16130d; --law-2:#221d14; --law-text:#e6ddca; --law-accent:#e3a974;
   --shadow-sm:0 1px 2px rgba(0,0,0,.3);
@@ -298,6 +300,26 @@ main{
 .opt.wrong .opt__mark::before{content:"✕";}
 .opt.dim{opacity:.46;}
 
+/* 舊年度題目遇法規修正：現行法正解標記（橘色小字）與選項下方備註 */
+.opt__now{
+  position:absolute;top:-9px;right:12px;z-index:1;
+  background:var(--now-bg);border:1px solid var(--now-border);color:var(--now);
+  border-radius:999px;padding:1px 8px;
+  font-size:calc(10.5px * var(--fs));font-weight:800;line-height:1.55;
+  white-space:nowrap;box-shadow:var(--shadow-sm);
+}
+.opts:not(.revealed) .opt__now{display:none;}
+/* 帶橘標的選項即使被判為非正解，也不整顆變淡，以免標記看不清 */
+.opt.dim.opt--now{opacity:1;}
+.opt.dim.opt--now .opt__badge,.opt.dim.opt--now .opt__text{opacity:.5;}
+.lawupd{
+  margin-top:11px;border:1px solid var(--now-border);border-left-width:4px;
+  border-radius:13px;background:var(--now-bg);padding:11px 13px;
+  font-size:calc(13px * var(--fs));line-height:1.62;color:var(--text);
+}
+.lawupd__label{margin:0 0 4px;font-weight:900;color:var(--now);font-size:calc(12.5px * var(--fs));}
+.lawupd__body{margin:0;}
+
 /* ============ ANSWER PANEL ============ */
 .answer{margin-top:15px;display:flex;flex-direction:column;gap:10px;animation:panelIn .34s cubic-bezier(.2,.7,.3,1);}
 @keyframes panelIn{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:none;}}
@@ -474,13 +496,41 @@ const MIXED_COUNT = 80;
 /* 題庫檔更新後避免瀏覽器沿用舊快取。
    必須是固定字串（不可用 Date.now()），否則每次開頁都會重新下載全部題庫、
    GitHub Pages 的 CDN 快取也會完全失效。更新題庫 JSON 後把日期往後改一次即可。 */
-const DATA_VERSION = '20260901';
+const DATA_VERSION = '20260909';
 function dataUrl(file) {
   return encodeURI(file) + '?v=' + DATA_VERSION;
 }
 
 let ALL_QUESTIONS = [];
 let MIXED_POOL_BY_YEAR = {};
+
+/* 跨年度題目索引（id → 題目）。錯題本可能收錄任一年度的題目，而 ALL_QUESTIONS
+   只裝目前選定的年度，故另備此索引，讓錯題複習一律取得題庫的最新版本。 */
+let QUESTION_INDEX = {};
+let allQuestionsIndexedPromise = null;
+
+function indexQuestions(arr) {
+  if (!Array.isArray(arr)) return;
+  arr.forEach(q => { if (q && q.id) QUESTION_INDEX[q.id] = q; });
+}
+
+/* 依 id 取題庫最新版本；未載入該年度時回傳 undefined，由呼叫端決定備援。 */
+function lookupQuestion(id) {
+  return QUESTION_INDEX[id] || ALL_QUESTIONS.find(x => x.id === id);
+}
+
+/* 載入全部年度題庫並建立索引，只實際抓取一次。任一年度失敗不影響其餘年度。 */
+function ensureAllQuestionsIndexed() {
+  if (!allQuestionsIndexedPromise) {
+    allQuestionsIndexedPromise = Promise.all(QUESTION_SETS.map(set =>
+      fetch(dataUrl(set.file))
+        .then(res => res.ok ? res.json() : null)
+        .then(indexQuestions)
+        .catch(() => {})
+    )).catch(() => {});
+  }
+  return allQuestionsIndexedPromise;
+}
 let currentIndex = 0;
 let currentView = 'practice';
 let shuffledOrder = [];
@@ -1232,6 +1282,7 @@ function loadQuestionSet(set) {
     })
     .then(data => {
       ALL_QUESTIONS = data;
+      indexQuestions(data);
       currentSet = set;
       shuffledOrder = [];
       brandSub.textContent = set.label;
@@ -1261,7 +1312,7 @@ function loadMixedSet() {
       .catch(() => ({ set, data: null }))
   )).then(results => {
     MIXED_POOL_BY_YEAR = {};
-    results.forEach(r => { if (r.data) MIXED_POOL_BY_YEAR[r.set.key] = r.data; });
+    results.forEach(r => { if (r.data) { MIXED_POOL_BY_YEAR[r.set.key] = r.data; indexQuestions(r.data); } });
     const total = Object.values(MIXED_POOL_BY_YEAR).reduce((n, a) => n + a.length, 0);
     if (total === 0) {
       mainArea.innerHTML = `<div class="errbox">
@@ -1349,13 +1400,25 @@ function renderPracticeCard(q, qIndexLabel, isReview) {
   const isEasyWrong = !!(entry && entry.wrongInMixed && entry.wrongInYears && Object.keys(entry.wrongInYears).length > 0);
   const isMixed = !!(currentSet && currentSet.mixed && !isReview);
 
+  const lawUpdate = q.law_update || null;
+  const nowSet = new Set((lawUpdate && lawUpdate.answers ? lawUpdate.answers : []).map(a => String(a)));
+  const nowLabel = (lawUpdate && lawUpdate.label) || '現行法規正解';
+
   const optionsHtml = q.options.map((opt, i) => {
-    return `<button data-opt="${escapeHtml(opt)}" class="option-btn opt">
+    const isNow = nowSet.has(String(opt));
+    const nowTag = isNow ? `<span class="opt__now">${escapeHtml(nowLabel)}</span>` : '';
+    return `<button data-opt="${escapeHtml(opt)}" class="option-btn opt${isNow ? ' opt--now' : ''}">
       <span class="opt__badge">${String.fromCharCode(65+i)}</span>
       <span class="opt__text">${escapeHtml(opt)}</span>
-      <span class="opt__mark"></span>
+      <span class="opt__mark"></span>${nowTag}
     </button>`;
   }).join('');
+
+  const lawUpdateHtml = (lawUpdate && lawUpdate.note)
+    ? `<div id="lawUpdateNote" class="lawupd hidden">
+        <p class="lawupd__label">🟠 法規已修正——備註</p>
+        <p class="lawupd__body">${escapeHtml(lawUpdate.note)}</p>
+      </div>` : '';
 
   const flags = [];
   if (isMultiAnswer(q)) flags.push('<span class="flag flag--warn">⚠ 多重給分／送分疑義題</span>');
@@ -1379,6 +1442,7 @@ function renderPracticeCard(q, qIndexLabel, isReview) {
     ${flags.length ? `<div class="flags">${flags.join('')}</div>` : ''}
     <p class="qtext">${escapeHtml(q.question)}</p>
     <div id="optionsWrap" class="opts">${optionsHtml}</div>
+    ${lawUpdateHtml}
     <div id="answerPanel" class="answer hidden"></div>
   </div>
   <div class="navrow">
@@ -1444,6 +1508,12 @@ function handleAnswer(q, clickedBtn, isReview) {
       btn.classList.add('dim');
     }
   });
+
+  /* 作答揭曉後才顯示「現行法規正解」橘標與法規修正備註，避免作答前劇透 */
+  const optsWrap = document.getElementById('optionsWrap');
+  if (optsWrap) optsWrap.classList.add('revealed');
+  const lawUpdEl = document.getElementById('lawUpdateNote');
+  if (lawUpdEl) lawUpdEl.classList.remove('hidden');
 
   const wrongBook = loadWrongBook();
   if (!isCorrect) {
@@ -1541,13 +1611,18 @@ function startReviewPractice() {
   if (reviewOrder.length === 0) return;
   reviewIndex = 0;
   isReviewPracticeMode = true;
-  showReviewPracticeQuestion();
+  /* 錯題橫跨多個年度，索引齊備後才出題，確保取到的是題庫最新版本。 */
+  ensureAllQuestionsIndexed().then(() => {
+    if (isReviewPracticeMode) showReviewPracticeQuestion();
+  });
 }
 
 function showReviewPracticeQuestion() {
   const wrongBook = loadWrongBook();
   const id = reviewOrder[reviewIndex];
-  const q = (wrongBook[id] && wrongBook[id].question) || ALL_QUESTIONS.find(x => x.id === id);
+  /* 優先取用題庫的最新版本，錯題本內的快照僅在該題已從題庫移除時作為備援，
+     以免詳解、法條原文或法規修正備註更新後，錯題複習仍顯示答錯當下的舊內容。 */
+  const q = lookupQuestion(id) || (wrongBook[id] && wrongBook[id].question);
   if (!q) { renderReviewView(); return; }
   progressBadge.classList.remove('hidden');
   progressBadge.textContent = `${reviewIndex+1} / ${reviewOrder.length}`;
@@ -1626,8 +1701,20 @@ function renderReviewView() {
   setActiveNav('review');
   progressBadge.classList.add('hidden');
   brandSub.textContent = '錯題複習本';
+  /* 錯題可能橫跨多個年度，先確保各年度題庫都已建立索引，再以最新版本呈現。 */
+  ensureAllQuestionsIndexed().then(() => {
+    if (currentView === 'review' && !isReviewPracticeMode) renderReviewViewBody();
+  });
+  renderReviewViewBody();
+}
+
+function renderReviewViewBody() {
   const wrongBook = loadWrongBook();
-  const items = Object.keys(wrongBook).map(id => ({ id, q: wrongBook[id].question, entry: wrongBook[id] }));
+  const items = Object.keys(wrongBook).map(id => ({
+    id,
+    q: lookupQuestion(id) || wrongBook[id].question,
+    entry: wrongBook[id]
+  }));
 
   if (items.length === 0) {
     mainArea.innerHTML = `<div class="center-state">
